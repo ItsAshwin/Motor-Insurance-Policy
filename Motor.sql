@@ -1,5 +1,3 @@
-DROP DATABASE IF EXISTS motor_db;
-
 CREATE DATABASE motor_db;
 
 USE motor_db;
@@ -201,6 +199,43 @@ CREATE TABLE mi_broker (
         FOREIGN KEY(user_id)
         REFERENCES mi_user(user_id)
 );
+
+CREATE TABLE mi_vehicle (
+    vehicle_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    make_id INT NOT NULL,
+    model_id INT NOT NULL,
+    color_id INT NOT NULL,
+    body_id INT NOT NULL,
+    category_id INT NOT NULL,
+    registration_no VARCHAR(20) NOT NULL UNIQUE,
+    engine_no VARCHAR(50) NOT NULL UNIQUE,
+    chassis_no VARCHAR(50) NOT NULL UNIQUE,
+    manufacture_year YEAR NOT NULL,
+    insured_value DECIMAL(12,2) NOT NULL,
+    status VARCHAR(10) DEFAULT 'ACTIVE',
+    added_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    added_by VARCHAR(50),
+
+    CONSTRAINT fk_vehicle_user FOREIGN KEY (user_id)
+        REFERENCES mi_user(user_id),
+
+    CONSTRAINT fk_vehicle_make FOREIGN KEY (make_id)
+        REFERENCES mi_make(make_id),
+
+    CONSTRAINT fk_vehicle_model FOREIGN KEY (model_id)
+        REFERENCES mi_model(model_id),
+
+    CONSTRAINT fk_vehicle_color FOREIGN KEY (color_id)
+        REFERENCES mi_vehicle_color(color_id),
+
+    CONSTRAINT fk_vehicle_body FOREIGN KEY (body_id)
+        REFERENCES mi_vehicle_body(body_id),
+
+    CONSTRAINT fk_vehicle_category FOREIGN KEY (category_id)
+        REFERENCES mi_vehicle_category(category_id)
+);
+
 
 CREATE TABLE mi_quote (
     quote_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -540,41 +575,6 @@ VALUES
 (14,'Daniel Tan','Guardian Insurance','LIC009','0123000009','broker9@gmail.com','Pahang',10000.00,8.50,'ACTIVE','Admin'),
 (15,'William Lim','Secure Cover','LIC010','0123000010','broker10@gmail.com','Kedah',16000.00,12.00,'ACTIVE','Admin');
 
-CREATE TABLE mi_vehicle (
-    vehicle_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    make_id INT NOT NULL,
-    model_id INT NOT NULL,
-    color_id INT NOT NULL,
-    body_id INT NOT NULL,
-    category_id INT NOT NULL,
-    registration_no VARCHAR(20) NOT NULL UNIQUE,
-    engine_no VARCHAR(50) NOT NULL UNIQUE,
-    chassis_no VARCHAR(50) NOT NULL UNIQUE,
-    manufacture_year YEAR NOT NULL,
-    insured_value DECIMAL(12,2) NOT NULL,
-    status VARCHAR(10) DEFAULT 'ACTIVE',
-    added_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    added_by VARCHAR(50),
-
-    CONSTRAINT fk_vehicle_user FOREIGN KEY (user_id)
-        REFERENCES mi_user(user_id),
-
-    CONSTRAINT fk_vehicle_make FOREIGN KEY (make_id)
-        REFERENCES mi_make(make_id),
-
-    CONSTRAINT fk_vehicle_model FOREIGN KEY (model_id)
-        REFERENCES mi_model(model_id),
-
-    CONSTRAINT fk_vehicle_color FOREIGN KEY (color_id)
-        REFERENCES mi_vehicle_color(color_id),
-
-    CONSTRAINT fk_vehicle_body FOREIGN KEY (body_id)
-        REFERENCES mi_vehicle_body(body_id),
-
-    CONSTRAINT fk_vehicle_category FOREIGN KEY (category_id)
-        REFERENCES mi_vehicle_category(category_id)
-);
 
 INSERT INTO mi_vehicle
 (user_id, make_id, model_id, color_id, body_id, category_id,
@@ -810,69 +810,14 @@ FROM mi_policy;
 SELECT MAX(total_premium) AS Highest_Premium
 FROM mi_quote_premium;
 
-/* Query 19 - Lowest Premium Amount */
 
-SELECT MIN(total_premium) AS Lowest_Premium
-FROM mi_quote_premium;
-
-/* Query 20 - Average Premium Amount */
-
-SELECT AVG(total_premium) AS Average_Premium
-FROM mi_quote_premium;
-
-/* Query 21 - Total Premium Collected */
-
-SELECT SUM(total_premium) AS Total_Premium
-FROM mi_quote_premium;
-
-/* Query 22 - Number of Vehicles by Category */
-
-SELECT category_id, COUNT(*) AS Total_Vehicles
-FROM mi_vehicle
-GROUP BY category_id;
-
-/* Query 23 - Average Insured Value by Vehicle Category */
-
-SELECT category_id, AVG(insured_value) AS Average_Insured_Value
-FROM mi_vehicle
-GROUP BY category_id;
-
-/* Query 24 - Total Premium by Product */
-
-SELECT p.product_name, SUM(qp.total_premium) AS Total_Premium
-FROM mi_quote q
-INNER JOIN mi_product p ON q.product_id = p.product_id
-INNER JOIN mi_quote_premium qp ON q.quote_id = qp.quote_id
-GROUP BY p.product_name;
-
-/* Query 25 - Products Having More Than One Quote */
-
-SELECT p.product_name, COUNT(q.quote_id) AS Total_Quotes
-FROM mi_quote q
-INNER JOIN mi_product p ON q.product_id = p.product_id
-GROUP BY p.product_name
-HAVING COUNT(q.quote_id) > 1;
-
-/* Query 26 - INNER JOIN */
-
-SELECT q.quote_no, CONCAT(u.first_name,' ',u.last_name) AS customer_name, p.product_name
-FROM mi_quote q
-INNER JOIN mi_user u ON q.user_id = u.user_id
-INNER JOIN mi_product p ON q.product_id = p.product_id;
-
-/* Query 27 - LEFT JOIN */
-
-SELECT u.user_id, CONCAT(u.first_name,' ',u.last_name) AS customer_name, b.broker_name
-FROM mi_user u
-LEFT JOIN mi_broker b ON u.user_id = b.user_id;
-
-/* Query 28 - RIGHT JOIN */
+/* Query 19- RIGHT JOIN */
 
 SELECT b.broker_name, CONCAT(u.first_name,' ',u.last_name) AS customer_name
 FROM mi_user u
 RIGHT JOIN mi_broker b ON u.user_id = b.user_id;
 
-/* Query 29 - Multiple INNER JOIN */
+/* Query 20 - Multiple INNER JOIN */
 
 SELECT po.policy_no, q.quote_no, CONCAT(u.first_name,' ',u.last_name) AS customer_name, qp.total_premium
 FROM mi_policy po
@@ -880,7 +825,7 @@ INNER JOIN mi_quote q ON po.quote_id = q.quote_id
 INNER JOIN mi_user u ON q.user_id = u.user_id
 INNER JOIN mi_quote_premium qp ON po.premium_id = qp.premium_id;
 
-/* Query 30 - Vehicle and Owner Details */
+/* Query 21 - Vehicle and Owner Details */
 
 SELECT CONCAT(u.first_name,' ',u.last_name) AS owner_name, m.make_desc, md.model_desc, v.registration_no
 FROM mi_vehicle v
@@ -888,7 +833,7 @@ INNER JOIN mi_user u ON v.user_id = u.user_id
 INNER JOIN mi_make m ON v.make_id = m.make_id
 INNER JOIN mi_model md ON v.model_id = md.model_id;
 
-/* Query 31 - Product with Premium Rate */
+/* Query 22 - Product with Premium Rate */
 
 SELECT p.product_name, pr.premium_percent, pr.tax_percent
 FROM mi_product p
@@ -901,20 +846,20 @@ FROM mi_broker_commission bc
 INNER JOIN mi_broker b ON bc.broker_id = b.broker_id
 INNER JOIN mi_product p ON bc.product_id = p.product_id;
 
-/* Query 33 - Customer Policy Details */
+/* Query 23 - Customer Policy Details */
 
 SELECT CONCAT(u.first_name,' ',u.last_name) AS customer_name, po.policy_no, po.policy_status
 FROM mi_policy po
 INNER JOIN mi_quote q ON po.quote_id = q.quote_id
 INNER JOIN mi_user u ON q.user_id = u.user_id;
 
-/* Query 34 - Quote and Premium Details */
+/* Query 24 - Quote and Premium Details */
 
 SELECT q.quote_no, qp.basic_premium, qp.tax_amount, qp.total_premium
 FROM mi_quote q
 INNER JOIN mi_quote_premium qp ON q.quote_id = qp.quote_id;
 
-/* Query 35 - Customer, Vehicle and Policy */
+/* Query 25 - Customer, Vehicle and Policy */
 
 SELECT CONCAT(u.first_name,' ',u.last_name) AS customer_name, v.registration_no, po.policy_no
 FROM mi_user u
@@ -922,20 +867,9 @@ INNER JOIN mi_vehicle v ON u.user_id = v.user_id
 INNER JOIN mi_quote q ON u.user_id = q.user_id
 INNER JOIN mi_policy po ON q.quote_id = po.quote_id;
 
-/* Query 36 - Customer with Highest Premium */
+/* Query 26 - Customer with Highest Premium */
 SELECT first_name,last_name FROM mi_user WHERE user_id=(SELECT q.user_id FROM mi_quote q INNER JOIN mi_quote_premium qp ON q.quote_id=qp.quote_id ORDER BY qp.total_premium DESC LIMIT 1);
 
-/* Query 37 - Vehicle with Highest Insured Value */
-SELECT registration_no,insured_value FROM mi_vehicle WHERE insured_value=(SELECT MAX(insured_value) FROM mi_vehicle);
-
-/* Query 38 - Premium Greater Than Average */
-SELECT * FROM mi_quote_premium WHERE total_premium>(SELECT AVG(total_premium) FROM mi_quote_premium);
-
-/* Query 39 - Customers Owning Toyota Vehicle */
-SELECT first_name,last_name FROM mi_user WHERE user_id IN(SELECT user_id FROM mi_vehicle WHERE make_id=(SELECT make_id FROM mi_make WHERE make_desc='Toyota'));
-
-/* Query 40 - Product with Maximum Premium Rate */
-SELECT product_name FROM mi_product WHERE product_id=(SELECT product_id FROM mi_premium_rate ORDER BY premium_percent DESC LIMIT 1);
 
 /* View 1 - Customer Details */
 
@@ -1232,8 +1166,6 @@ WHERE product_id=1;
 ROLLBACK;
 
 SELECT * FROM mi_product WHERE product_id=1;
-
-
 /* Transaction 5 - INSERT and COMMIT */
 
 START TRANSACTION;
